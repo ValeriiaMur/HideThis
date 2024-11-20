@@ -14,18 +14,26 @@ document.getElementById("addKeyword").addEventListener("click", () => {
 
   if (keyword) {
     // Retrieve existing keywords, add the new one, and save back
-    chrome.storage.local.get(["keywords"], ({ keywords = [], tabs }) => {
+    chrome.storage.local.get(["keywords"], ({ keywords = [] }) => {
       keywords.push(keyword);
-      chrome.storage.local.set({ keywords }, () => updateKeywordList(keywords));
-      if (tabs[0]) {
-        chrome.tabs.reload(tabs[0].id); // Reload the current tab
-      }
+      chrome.storage.local.set({ keywords }, () => {
+        // Update the keyword list
+        updateKeywordList(keywords);
+
+        // Query the active tab and refresh it
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          if (tabs[0]) {
+            chrome.tabs.reload(tabs[0].id); // Reload the current tab
+          }
+        });
+      });
     });
 
     // Clear the input field
     keywordInput.value = "";
   }
 });
+
 
 // Save effect and refresh the current page
 document.getElementById("saveSettings").addEventListener("click", () => {
@@ -46,19 +54,21 @@ document.getElementById("saveSettings").addEventListener("click", () => {
 function updateKeywordList(keywords) {
   const list = document.getElementById("keywordList");
 
-  // Render keywords as a list with remove buttons
-  list.innerHTML = keywords
-    .map((kw, index) => `
-      <li>
-        ${kw}
+// Render keywords as a list with remove buttons
+list.innerHTML = keywords
+  .map(
+    (kw, index) => `
+      <li class="keyword-item">
+        <span class="keyword-text">${kw}</span>
         <button class="remove-btn" data-index="${index}" title="Remove keyword">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
             <path d="M18.3 5.7a1 1 0 0 0-1.4 0L12 10.6 7.1 5.7a1 1 0 1 0-1.4 1.4L10.6 12l-4.9 4.9a1 1 0 1 0 1.4 1.4L12 13.4l4.9 4.9a1 1 0 0 0 1.4-1.4L13.4 12l4.9-4.9a1 1 0 0 0 0-1.4z"/>
           </svg>
         </button>
       </li>
-    `)
-    .join("");
+    `
+  )
+  .join("");
 
   // Add event listeners to remove buttons
   document.querySelectorAll(".remove-btn").forEach((button) => {

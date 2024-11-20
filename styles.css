@@ -46,3 +46,42 @@ select {
   padding: 5px;
   margin: 10px 0;
 }
+
+/* Flexbox layout for each list item */
+.keyword-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 10px;
+  border-bottom: 1px solid #ddd; /* Optional separator */
+}
+
+.keyword-text {
+  flex-grow: 1;
+  font-size: 14px;
+  color: #333;
+  margin-right: 10px;
+  word-break: break-word; /* Prevent overflow */
+}
+
+.remove-btn {
+  background: none;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #888;
+  width:auto;
+}
+
+.remove-btn:hover svg {
+  fill: #e63946;
+  background-color: #f0f0f0 !important;
+}
+
+.remove-btn svg {
+  width: 12px;
+  height: 12px;
+}
