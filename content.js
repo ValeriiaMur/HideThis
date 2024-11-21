@@ -5,7 +5,7 @@ function applyEffect(word, effect) {
     case "emoji":
       return `<span class="keyword-filtered emoji">💩</span>`;
     case "remove":
-      return ""; 
+      return "";
     default:
       return word;
   }
@@ -14,35 +14,39 @@ function applyEffect(word, effect) {
 function highlightKeywords(node, keywords, effect) {
   if (node.nodeType === Node.TEXT_NODE) {
     const text = node.nodeValue;
-    const regex = new RegExp(`\\b(${keywords.join("|")})\\b`, "gi");
-    
+    const regex = new RegExp(`\\b(${keywords.map(k => escapeRegExp(k)).join("|")})\\b`, "gi");
+
     if (regex.test(text)) {
       const fragment = document.createDocumentFragment();
       let lastIndex = 0;
-      
+
       text.replace(regex, (match, keyword, index) => {
         // Add text before the match
         if (index > lastIndex) {
           fragment.appendChild(document.createTextNode(text.slice(lastIndex, index)));
         }
-        
+
         // Create a span for the matched keyword
         const span = document.createElement('span');
         span.innerHTML = applyEffect(match, effect);
         fragment.appendChild(span);
-        
+
         lastIndex = index + match.length;
       });
-      
+
       // Add remaining text
       if (lastIndex < text.length) {
         fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
       }
-      
+
       return fragment;
     }
   }
   return node;
+}
+
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function processNode(node, keywords, effect) {
@@ -51,7 +55,7 @@ function processNode(node, keywords, effect) {
       const childNodes = Array.from(node.childNodes);
       childNodes.forEach(childNode => {
         const processedNode = highlightKeywords(childNode, keywords, effect);
-        
+
         if (processedNode !== childNode) {
           if (processedNode instanceof DocumentFragment) {
             node.replaceChild(processedNode, childNode);
@@ -73,15 +77,47 @@ function processNode(node, keywords, effect) {
 }
 
 function main() {
-  const tags = ["p", "h1", "h2", "h3", "font", "code", "span", "li","a"];
-  
+  const tags = [
+    // Text content
+    "p", "span", "div", "text",
+    
+    // Headings
+    "h1", "h2", "h3", "h4", "h5", "h6",
+    
+    // Lists
+    "li", "dt", "dd",
+    
+    // Links and text inputs
+    "a", "button", "label", "input[type='text']", "textarea",
+    
+    // Table content
+    "th", "td", "caption",
+    
+    // Semantic elements
+    "article", "section", "nav", "header", "footer", 
+    "main", "aside", "figure", "figcaption",
+    
+    // Formatting
+    "em", "strong", "i", "b", "u", "small", "mark",
+    "cite", "q", "blockquote", "pre", "code", "kbd",
+    
+    // Custom elements
+    "font"
+  ];
+
   chrome.storage.local.get(["keywords", "effect"], ({ keywords, effect }) => {
     if (!keywords || keywords.length === 0) {
       return;
     }
 
     tags.forEach(tagName => {
-      const elements = document.getElementsByTagName(tagName);
+      let elements;
+      if (tagName.includes('[')) {
+        // Handle complex selectors like input[type='text']
+        elements = document.querySelectorAll(tagName);
+      } else {
+        elements = document.getElementsByTagName(tagName);
+      }
       Array.from(elements).forEach(element => {
         processNode(element, keywords, effect);
       });
@@ -91,12 +127,12 @@ function main() {
   // Add global styles
   const style = document.createElement("style");
   style.textContent = `
-    .keyword-filtered.blur { 
-      background: rgba(0, 0, 0, 0.8); 
-      color: transparent; 
-      text-shadow: 0 0 5px black; 
-      padding: 0 5px; 
-      border-radius: 3px; 
+    .keyword-filtered.blur {
+      background: rgba(0, 0, 0, 0.8);
+      color: transparent;
+      text-shadow: 0 0 5px black;
+      padding: 0 5px;
+      border-radius: 3px;
     }
     .keyword-filtered.emoji {
       position: relative;
@@ -112,4 +148,5 @@ function main() {
   document.head.appendChild(style);
 }
 
+// Start the script
 main();
