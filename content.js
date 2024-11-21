@@ -73,7 +73,7 @@ function processNode(node, keywords, effect) {
 }
 
 function main() {
-  const tags = ["p", "h1", "h2", "h3", "font", "code", "span", "li"];
+  const tags = ["p", "h1", "h2", "h3", "font", "code", "span", "li","a"];
   
   chrome.storage.local.get(["keywords", "effect"], ({ keywords, effect }) => {
     if (!keywords || keywords.length === 0) {
